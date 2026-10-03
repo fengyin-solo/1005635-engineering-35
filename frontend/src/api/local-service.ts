@@ -1,5 +1,5 @@
 import { MODULE_BY_KEY } from '@/data/modules'
-import { allRows, listRows, resetRows, saveRows } from '@/data/local-store'
+import { allRows, listRows, resetAllRows, resetRows, saveRows } from '@/data/local-store'
 import type { ActionResult, EntryRow, ModuleMeta, OverviewResult, PageResult } from '@/data/types'
 
 // 会写进数据的「往回走」动作：命中就把这条记录标成异常态，看板上能一眼看出来。
@@ -59,6 +59,13 @@ export function runAction(key: string, id: number, action: string): ActionResult
 export function resetModule(key: string): PageResult {
   resetRows(key)
   return listEntries(key)
+}
+
+// 本地复位（回收入口）：全部模块回到种子数据，返回复位后的概览，调用方直接刷新页面数字。
+// token 相同的重复提交只记一次，applied 为 false 时说明这次提交之前已经复位过。
+export function resetAllModules(token?: string): { applied: boolean; overview: OverviewResult } {
+  const { applied } = resetAllRows(token)
+  return { applied, overview: loadOverview() }
 }
 
 export function exportEntries(key: string): { filename: string; content: string } {

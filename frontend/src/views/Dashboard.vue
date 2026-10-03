@@ -7,6 +7,15 @@
       </div>
       <div class="page-actions">
         <button class="btn" type="button" @click="refresh">重新统计</button>
+        <button
+          v-if="showLocalReset"
+          class="btn danger"
+          type="button"
+          :disabled="resetting"
+          @click="resetLocal"
+        >
+          {{ resetting ? '复位中…' : '本地数据复位' }}
+        </button>
       </div>
     </header>
     <div class="stat-row">
@@ -30,6 +39,7 @@
     </table>
     <footer class="page-foot">
       <span>数据保存在本机浏览器里，换浏览器或清缓存会回到示例数据</span>
+      <span v-if="resetMessage" class="error-text">{{ resetMessage }}</span>
     </footer>
   </section>
 </template>
@@ -37,16 +47,46 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
-import { loadOverview } from '@/api/local-service'
+import { loadOverview, resetAllModules } from '@/api/local-service'
 import type { OverviewResult } from '@/data/types'
 
 const cards = ref<OverviewResult['cards']>([])
 const moduleRows = ref<OverviewResult['modules']>([])
+const resetting = ref(false)
+const resetMessage = ref('')
 
-function refresh() {
-  const payload = loadOverview()
+// 回收入口只在本地环境出现：dev server 下才有这个按钮，构建产物里没有
+const showLocalReset = import.meta.env.DEV
+
+function applyOverview(payload: OverviewResult) {
   cards.value = payload.cards
   moduleRows.value = payload.modules
+}
+
+function refresh() {
+  applyOverview(loadOverview())
+}
+
+function resetLocal() {
+  if (resetting.value) {
+    return
+  }
+  if (!window.confirm('本地数据复位会把所有模块恢复到种子数据，确定继续？')) {
+    return
+  }
+  resetting.value = true
+  resetMessage.value = ''
+  try {
+    // 每次点击生成一个复位令牌：同一次提交重复到达只记一次，不会重复复位
+    const token = `reset-${crypto.randomUUID()}`
+    const { applied, overview } = resetAllModules(token)
+    applyOverview(overview)
+    resetMessage.value = applied
+      ? '已按种子数据复位，各模块待处理数已归位'
+      : '这次复位已记录过，未重复执行'
+  } finally {
+    resetting.value = false
+  }
 }
 
 onMounted(refresh)

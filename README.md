@@ -23,10 +23,20 @@
 
 ## 启动
 
+新同事克隆下来只要一条命令，装依赖和灌种子数据一次做完：
+
 ```bash
-cd frontend
-npm install
-npm run dev
+make bootstrap        # 等价于 cd frontend && npm run bootstrap
+```
+
+这一步会：有 `package-lock.json` 就按锁定版本 `npm ci`；锁文件缺失（依赖版本没补录过）先退回
+`npm install` 把版本补录进锁文件；然后把种子数据灌进本地镜像并做一致性校验。反复跑不会产生重复数据，
+跑到一半断了重跑会接着断点继续。
+
+起服务：
+
+```bash
+make frontend         # 等价于 cd frontend && npm run dev
 ```
 
 前端默认监听 `http://127.0.0.1:5173/`，dev server 不会自动打开浏览器，需要自己访问。
@@ -34,9 +44,29 @@ npm run dev
 生产构建：
 
 ```bash
-cd frontend
-npm run build
+make build            # 等价于 cd frontend && npm run build
 ```
+
+## 数据复位（回收入口）
+
+只给本地环境用，两种走法，读的都是同一份种子数据 `frontend/src/data/seed.json`：
+
+- 命令行：`make reset-local`（等价于 `npm run reset:local`）。`APP_ENV`/`NODE_ENV` 显式设成非本地环境时直接拒绝。
+  每次复位带一个令牌（`--token <令牌>`），同一个令牌重复提交只记一次；按模块断点续跑，中断后用同一令牌重跑即可。
+- 页面上：运营概览页的「本地数据复位」按钮（仅 dev server 下显示），不用再自己翻浏览器存储。
+
+复位后所有模块回到种子数据，各模块待处理数跟着归位，概览的登记总量与各模块明细重新对齐。
+
+其他常用命令：
+
+```bash
+make seed             # 只灌种子数据（幂等）
+make check-data       # 一致性检查：概览总量必须等于各模块之和
+cd frontend && npm run test:smoke   # 浏览器侧数据层冒烟测试
+```
+
+脚本侧的本地镜像在 `frontend/.local-data/`（不进仓库），结构和浏览器 localStorage 的
+`district-heating:entries` 完全一致；浏览器里的数据仍以 localStorage 为准。
 
 ## 业务模块
 
@@ -65,7 +95,10 @@ npm run build
 
 - 每个模块的页面在 `frontend/src/views/<模块>/index.vue`，页面只负责渲染，读写统一走
   `frontend/src/api/local-service.ts`。
-- 字段、状态、动作与流转目标集中在 `frontend/src/data/modules.ts`；示例数据在
-  `frontend/src/data/seed.ts`。
+- 字段、状态、动作与流转目标集中在 `frontend/src/data/modules.ts`；种子数据只有一份，在
+  `frontend/src/data/seed.json`，页面播种、起步脚本、回收入口读的都是它。
 - 状态流转只允许在 `local-service.ts` 里改，页面组件不做业务判断。
-- 想回到初始数据：清掉浏览器里 `district-heating:entries` 这一项，或调用 `resetModule(模块)`。
+- 本地数据带种子版本号：种子一换，浏览器里上一轮的旧数据会在打开时自动回到当前种子，
+  概览总量与各模块清单始终从同一份数据算出来。
+- 想回到初始数据：用运营概览页的「本地数据复位」按钮、`make reset-local`、清掉浏览器里
+  `district-heating:entries` 这一项，或调用 `resetModule(模块)` 复位单个模块。
