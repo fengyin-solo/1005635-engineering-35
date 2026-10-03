@@ -1,0 +1,5 @@
+node_modules
+dist
+.setup-state.json
+src/data/seed-manifest.local.json
+*.log

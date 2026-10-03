@@ -795,3 +795,31 @@ export const SEED_ROWS: Record<string, EntryRow[]> = {
     }
   ],
 }
+
+// 种子版本：对 SEED_ROWS 规范化序列化后取 FNV-1a 哈希。种子一改版本就变，
+// 浏览器里「上一轮」的旧数据会在启动归一化时被识别出来并整体换播。
+// CLI 脚本（scripts/）与浏览器读的是同一份 SEED_ROWS / SEED_VERSION。
+export function stableSeedStringify(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map(stableSeedStringify).join(',')}]`
+  }
+  if (value !== null && typeof value === 'object') {
+    const record = value as Record<string, unknown>
+    return `{${Object.keys(record)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${stableSeedStringify(record[key])}`)
+      .join(',')}}`
+  }
+  return JSON.stringify(value)
+}
+
+export function seedHash(text: string): string {
+  let hash = 0x811c9dc5
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193)
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0')
+}
+
+export const SEED_VERSION = seedHash(stableSeedStringify(SEED_ROWS))

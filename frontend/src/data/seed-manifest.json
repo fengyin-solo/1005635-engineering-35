@@ -1,0 +1,140 @@
+{
+  "kind": "seed-manifest",
+  "source": "setup",
+  "seedVersion": "10f6a6e7",
+  "resetToken": "10f6a6e7",
+  "totals": {
+    "modules": 18,
+    "created": 54,
+    "pending": 36,
+    "abnormal": 18
+  },
+  "modules": [
+    {
+      "key": "heatstation",
+      "name": "换热站台账",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "primarynet",
+      "name": "一次管网",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "secondarynet",
+      "name": "二次管网",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "stationpatrol",
+      "name": "站点巡检",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "roomtemp",
+      "name": "室温监测",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "hydraulic",
+      "name": "水力平衡",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "heatmeter",
+      "name": "热计量抄表",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "emergencyrepair",
+      "name": "抢修处置",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "valvewell",
+      "name": "阀门井维护",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "circpump",
+      "name": "循环泵运维",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "makeupwater",
+      "name": "补水定压",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "hxclean",
+      "name": "换热器清洗",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "boilerroom",
+      "name": "锅炉房运行",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "leakdetect",
+      "name": "管网探漏",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "compensator",
+      "name": "补偿器检查",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "heatnotice",
+      "name": "停暖通知",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "heatbilling",
+      "name": "热费结算",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    },
+    {
+      "key": "householdservice",
+      "name": "入户服务",
+      "count": 3,
+      "pending": 2,
+      "abnormal": 1
+    }
+  ]
+}

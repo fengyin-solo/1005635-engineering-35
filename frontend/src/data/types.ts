@@ -36,3 +36,23 @@ export type OverviewResult = {
   cards: { label: string; value: number }[]
   modules: { name: string; created: number; pending: number; abnormal: number }[]
 }
+
+export type ResetLog = {
+  at: string
+  reason: string
+  seedVersion: string
+  total: number
+  pending: number
+  abnormal: number
+  signature: string
+}
+
+export type ResetResult = {
+  ok: boolean
+  recorded: boolean
+  message: string
+  total: number
+  pending: number
+  abnormal: number
+  resetLog?: ResetLog
+}

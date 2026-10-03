@@ -1,6 +1,24 @@
-import { MODULE_BY_KEY } from '@/data/modules'
-import { allRows, listRows, resetRows, saveRows } from '@/data/local-store'
-import type { ActionResult, EntryRow, ModuleMeta, OverviewResult, PageResult } from '@/data/types'
+import { MODULE_BY_KEY, MODULES } from '@/data/modules'
+import {
+  allRows,
+  listRows,
+  lastReset,
+  resetLogs,
+  resetRows,
+  reseedAll,
+  saveRows,
+} from '@/data/local-store'
+import { activeManifest, manifestMatchesSeed } from '@/data/seed-manifest'
+import { SEED_VERSION } from '@/data/seed'
+import type {
+  ActionResult,
+  EntryRow,
+  ModuleMeta,
+  OverviewResult,
+  PageResult,
+  ResetLog,
+  ResetResult,
+} from '@/data/types'
 
 // 会写进数据的「往回走」动作：命中就把这条记录标成异常态，看板上能一眼看出来。
 const NEGATIVE_ACTIONS = ['撤销', '作废', '拒绝', '驳回', '停用', '忽略', '下线', '回滚']
@@ -59,6 +77,55 @@ export function runAction(key: string, id: number, action: string): ActionResult
 export function resetModule(key: string): PageResult {
   resetRows(key)
   return listEntries(key)
+}
+
+// 回收入口：全部模块整体复位到种子状态，结果直接落到各模块的待处理清单。
+// 已是种子状态时只返回提示，复位记录按结果签名去重（重复提交只记一次）。
+export function resetAll(reason = '页面手动复位'): ResetResult {
+  return reseedAll(reason)
+}
+
+export function getResetLogs(): ResetLog[] {
+  return resetLogs()
+}
+
+export function getLastReset(): ResetLog | null {
+  return lastReset()
+}
+
+// 种子健康度：代码里的种子版本 / setup 生成的清单 / 各模块明细三处要对得上，
+// 对不上就让新同事重跑 ./setup.sh，而不是自己翻浏览器存储。
+export function seedHealth(): {
+  seedVersion: string
+  manifestVersion: string | null
+  manifestSource: 'setup' | 'reset-local' | null
+  manifestConsistent: boolean
+  modulesExpected: number
+  modulesStored: number
+  ok: boolean
+  message: string
+} {
+  const manifest = activeManifest()
+  const rows = allRows()
+  const storedTotals = Object.values(rows).reduce(
+    (sum, entries) => sum + entries.length,
+    0,
+  )
+  const manifestTotals = manifest?.totals.created ?? 0
+  const consistent = manifestMatchesSeed(manifest)
+  const countsMatch = consistent && manifestTotals === storedTotals
+  return {
+    seedVersion: SEED_VERSION,
+    manifestVersion: manifest?.seedVersion ?? null,
+    manifestSource: manifest?.source ?? null,
+    manifestConsistent: countsMatch,
+    modulesExpected: MODULES.length,
+    modulesStored: Object.keys(rows).length,
+    ok: countsMatch && Object.keys(rows).length === MODULES.length,
+    message: countsMatch
+      ? '种子清单与本地数据一致'
+      : '种子清单与代码/本地数据对不上，请回到仓库根目录重跑 ./setup.sh',
+  }
 }
 
 export function exportEntries(key: string): { filename: string; content: string } {

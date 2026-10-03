@@ -85,3 +85,7 @@ desktop.ini
 *.db
 *.pid
 *.seed
+
+# ===== 本地起步脚本产物（setup/reset-local）=====
+frontend/.setup-state.json
+frontend/src/data/seed-manifest.local.json

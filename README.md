@@ -7,25 +7,74 @@
 结果都持久化在浏览器 `localStorage` 里，刷新或重开浏览器都还在。dev server 已关掉自动打开页面，
 启动后按终端打印的地址手工打开。
 
+## 快速起步（新同事看这里）
+
+克隆后**只需要一条命令**，在仓库根目录执行：
+
+```bash
+./setup.sh
+```
+
+它会按顺序做完两件事，两件事都是幂等的：
+
+1. **拉依赖**：检查 `node_modules` 是否完整，缺什么（含跨平台遗留、`package.json` 新增的包）
+   先自动退回 `npm install` 补录，补完再校验一遍。
+2. **灌种子**：用 `frontend/src/data/seed.ts` 这同一份种子生成
+   `frontend/src/data/seed-manifest.json`（含种子版本、各模块登记/待处理/异常计数）。
+   进度记在 `frontend/.setup-state.json`，**跑到一半断了直接重跑**，已完成的步骤会跳过。
+
+然后即可启动：
+
+```bash
+cd frontend && npm run dev
+```
+
+> 也可以用 `make setup`，或在 `frontend/` 下 `npm run setup`。
+> 种子清单带版本号（由种子内容算出）。种子更新后，页面打开时会发现浏览器里是「上一轮」旧数据，
+> 自动整体换播并补/删模块键，因此运营概览的登记总量永远等于各模块明细之和，不用自己翻
+> 浏览器存储。
+
+## 本地复位（回收入口，仅本地环境）
+
+想把所有模块一起回到种子状态，在仓库根目录执行：
+
+```bash
+./reset-local.sh          # 或 make reset-local / cd frontend && npm run reset:local
+```
+
+它只生成一份本地复位清单（`seed-manifest.local.json`，已 gitignore），换一个复位令牌；
+**刷新或重开页面**时数据层识别到令牌变化，就用同一份 `seed.ts` 整体重播——各模块的待处理
+清单随之归位（当前种子：18 个模块、登记 54 条、待处理 36 条、异常 18 条）。
+
+- 生产 / CI 环境会拒绝执行（靠 `NODE_ENV` / `CI` 识别）。
+- 复位记录落在浏览器里，同一份结果**重复提交只记一次**；dev 环境的「运营概览」页还有一个
+  「复位本地数据」按钮，生产构建里不渲染。
+
+
+
 ## 目录结构
 
 ```text
 .
-├── frontend/                 Vue 3 + Vite + TypeScript 前端（唯一运行单元）
-│   ├── src/views/            每个业务模块一个页面
+├── setup.sh                 一条命令起步：拉依赖 + 灌种子（幂等、可续跑）
+├── reset-local.sh           回收入口：仅本地环境复位用
+├── frontend/                Vue 3 + Vite + TypeScript 前端（唯一运行单元）
+│   ├── scripts/             setup/reset 的 CLI 实现（tsx 直跑，与页面同读 seed.ts）
+│   ├── src/views/           每个业务模块一个页面
 │   ├── src/api/local-service.ts   本地数据服务：列表、筛选、动作流转、导出
-│   ├── src/data/             模块元数据 / 示例数据 / localStorage 持久化
-│   ├── src/stores/           会话与筛选状态
-│   └── vite.config.ts        dev server 配置（open: false，无 /api 代理）
+│   ├── src/data/            模块元数据 / 种子数据 / 种子清单 / localStorage 持久化
+│   ├── src/stores/          会话与筛选状态
+│   └── vite.config.ts       dev server 配置（open: false，无 /api 代理）
 ├── .gitignore
 └── docker-compose.yml
 ```
 
 ## 启动
 
+先执行过一次 `./setup.sh`（见上方「快速起步」），然后：
+
 ```bash
 cd frontend
-npm install
 npm run dev
 ```
 
@@ -68,4 +117,8 @@ npm run build
 - 字段、状态、动作与流转目标集中在 `frontend/src/data/modules.ts`；示例数据在
   `frontend/src/data/seed.ts`。
 - 状态流转只允许在 `local-service.ts` 里改，页面组件不做业务判断。
-- 想回到初始数据：清掉浏览器里 `district-heating:entries` 这一项，或调用 `resetModule(模块)`。
+- 种子数据只有一处：`frontend/src/data/seed.ts`；CLI 脚本（`frontend/scripts/`）和页面数据层
+  都从这里读。改完种子重跑 `./setup.sh`，种子版本会自动变化并驱动浏览器端换播。
+- 想回到初始数据：仓库根目录执行 `./reset-local.sh` 后刷新页面（全部模块一起复位）；
+  只复位单个模块仍可调用 `resetModule(模块)`；也可以手工清掉浏览器里
+  `district-heating:entries` 这一项。
